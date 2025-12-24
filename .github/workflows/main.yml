@@ -1,23 +1,32 @@
 name: CI
 on: workflow_dispatch
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Setup Ngrok
-        run: choco install ngrok
+      - name: Install Ngrok
+        # Chocolatey se install karne se koi error nahi aata
+        run: choco install ngrok -y
+
       - name: Auth
+        # Token ko config mein force add karna
         run: ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-      - name: Enable TS
+
+      - name: Enable Remote Desktop
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-      - name: Set Password
-        run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
+      - name: Create User
+        # Is se login password set ho jayega
+        run: net user runneradmin P@ssw0rd! /add ; net localgroup administrators runneradmin /add
+
       - name: Start Tunnel
-        run: |
-          # Hum yahan region 'ap' (Asia Pacific) use kar rahe hain takay connection fast ho
-          Start-Process ngrok -ArgumentList "tcp --region ap 3389"
+        # Asia region use karna behtar connection ke liye
+        run: Start-Process ngrok -ArgumentList "tcp --region ap 3389"
+
       - name: Keep Alive
+        # Is se machine 6 ghante tak band nahi hogi
         run: Start-Sleep -Seconds 21600
