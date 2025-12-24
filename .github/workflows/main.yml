@@ -1,28 +1,21 @@
 name: CI
-
-on: [push, workflow_dispatch]
-
+on: workflow_dispatch
 jobs:
   build:
-
     runs-on: windows-latest
-
     steps:
-      - name: Download
-        run: Invoke-WebRequest https://bin.equinox.io/c/bNyjImQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-      - name: Extract
-        run: Expand-Archive ngrok.zip
+      - name: Install Ngrok
+        run: choco install ngrok
       - name: Auth
-        run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
-        env:
-          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+        run: ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
       - name: Enable TS
-        run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-      - name: run
-        run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-      - name: run
-        run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-      - name: run
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+      - name: Set Password
         run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
       - name: Create Tunnel
-        run: .\ngrok\ngrok.exe tcp 3389
+        run: Start-Process powershell -ArgumentList "-NoExit", "ngrok tcp 3389"
+      - name: Keep Alive
+        run: Start-Sleep -Seconds 21600
