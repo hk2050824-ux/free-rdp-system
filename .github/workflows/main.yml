@@ -4,19 +4,15 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Download
+      - name: Setup Ngrok
         run: |
-          $url = "https://bin.equinox.io/c/bPR98p1vXU/ngrok-v3-stable-windows-amd64.zip"
-          Invoke-WebRequest -Uri $url -OutFile ngrok.zip
-      - name: Extract
-        run: Expand-Archive ngrok.zip
-      - name: Auth
-        run: .\ngrok.exe config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-      - name: Enable TS
+          choco install ngrok
+      - name: Auth Ngrok
+        run: ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+      - name: Start RDP
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-      - name: Create Tunnel
-        run: Start-Process powershell -ArgumentList "-NoExit", ".\ngrok.exe tcp 3389"
+          Start-Process powershell -ArgumentList "-NoExit", "ngrok tcp 3389"
       - name: Keep Alive
         run: Start-Sleep -Seconds 21600
