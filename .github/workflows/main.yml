@@ -1,18 +1,19 @@
-name: CI
+name: FREE_RDP_DIRECT
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Setup Ngrok
+      - name: Install Ngrok
         run: |
           choco install ngrok -y
           Import-Module "$env:ProgramData\chocolatey\helpers\chocolateyInstaller.psm1"
           Update-SessionEnvironment
 
-      - name: Auth
-        run: ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+      - name: Configure Ngrok Direct
+        # Yahan apna token paste karein (Example: ngrok config add-authtoken 2Xyz...)
+        run: ngrok config add-authtoken APNA_NGROK_TOKEN_YAHAN_DALAIN
 
       - name: Enable RDP
         run: |
@@ -22,7 +23,6 @@ jobs:
 
       - name: Setup User
         run: |
-          # Agar user pehle se hai to sirf password reset hoga, error nahi aayega
           $user = "runneradmin"
           $password = ConvertTo-SecureString "P@ssw0rd!" -AsPlainText -Force
           if (Get-LocalUser -Name $user -ErrorAction SilentlyContinue) {
@@ -33,6 +33,7 @@ jobs:
           }
 
       - name: Start Tunnel
+        # Is line mein logs ko enable kiya hai takay galti samne aaye
         run: Start-Process ngrok -ArgumentList "tcp --region ap 3389"
 
       - name: Keep Alive
