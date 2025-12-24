@@ -4,11 +4,10 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Download Ngrok
+      - name: Download Ngrok Official
         run: |
-          $url = "https://bin.equinox.io/c/bPR98p1vXU/ngrok-v3-stable-windows-amd64.zip"
-          Invoke-WebRequest -Uri $url -OutFile ngrok.zip
-          Expand-Archive ngrok.zip -DestinationPath .
+          curl -sLO https://bin.equinox.io/c/bPR98p1vXU/ngrok-v3-stable-windows-amd64.zip
+          Expand-Archive ngrok-v3-stable-windows-amd64.zip -DestinationPath .
       - name: Authenticate Ngrok
         run: .\ngrok.exe config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
       - name: Start RDP
