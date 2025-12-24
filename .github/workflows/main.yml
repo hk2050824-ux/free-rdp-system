@@ -7,7 +7,6 @@ jobs:
     steps:
       - name: Setup Ngrok
         run: |
-          # Is line se ngrok install bhi hoga aur foran chalne ke liye tayar ho jayega
           choco install ngrok -y
           Import-Module "$env:ProgramData\chocolatey\helpers\chocolateyInstaller.psm1"
           Update-SessionEnvironment
@@ -21,11 +20,19 @@ jobs:
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
-      - name: Create User
-        run: net user runneradmin P@ssw0rd! /add ; net localgroup administrators runneradmin /add
+      - name: Setup User
+        run: |
+          # Agar user pehle se hai to sirf password reset hoga, error nahi aayega
+          $user = "runneradmin"
+          $password = ConvertTo-SecureString "P@ssw0rd!" -AsPlainText -Force
+          if (Get-LocalUser -Name $user -ErrorAction SilentlyContinue) {
+              Set-LocalUser -Name $user -Password $password
+          } else {
+              New-LocalUser -Name $user -Password $password -FullName "Runner Admin"
+              Add-LocalGroupMember -Group "Administrators" -Member $user
+          }
 
       - name: Start Tunnel
-        # Asia region use kar rahe hain takay connection fast ho
         run: Start-Process ngrok -ArgumentList "tcp --region ap 3389"
 
       - name: Keep Alive
