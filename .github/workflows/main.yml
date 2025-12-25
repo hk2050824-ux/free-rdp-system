@@ -1,4 +1,10 @@
-steps:
+name: CLO_RDP_FIXED
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
       - name: Enable Windows RDP
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
@@ -6,3 +12,13 @@ steps:
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin P@ssw0rd! /add
           net localgroup administrators runneradmin /add
+      - name: Install Cloudflared
+        run: |
+          curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
+      - name: Start Cloudflare Tunnel
+        run: |
+          ./cloudflared.exe tunnel --url rdp://localhost:3389
+      - name: Keep Alive
+        run: |
+          Write-Host "RDP is ready. Copy the link from the logs above."
+          Start-Sleep -Seconds 21600
