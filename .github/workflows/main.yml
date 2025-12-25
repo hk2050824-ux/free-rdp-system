@@ -1,4 +1,4 @@
-name: Professional-SMM-RDP
+name: SMM-Watchtime-RDP
 
 on: workflow_dispatch
 
@@ -16,7 +16,7 @@ jobs:
 
       - name: Creating User
         run: |
-          net user runneradmin YourPassword123 /add
+          net user runneradmin Pass123 /add
           net localgroup administrators runneradmin /add
 
       - name: Installing Cloudflared
@@ -29,5 +29,5 @@ jobs:
         
       - name: Keep Alive (6 Hours)
         run: |
-          echo "RDP is Ready!"
+          echo "System is Ready!"
           sleep 21600
