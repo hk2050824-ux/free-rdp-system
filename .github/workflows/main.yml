@@ -1,19 +1,15 @@
-name: RDP-Final-Success
+name: RDP-Bypass-NLA
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Preparing System
+      - name: Force Disable RDP Security
         run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-      - name: User Setup
-        continue-on-error: true
-        run: |
-          net user runneradmin Pass123 /add
-          net localgroup administrators runneradmin /add
-      - name: Generating Link
+      - name: Start Tunnel
         run: |
           curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
           ./cloudflared.exe tunnel --url rdp://localhost:3389
