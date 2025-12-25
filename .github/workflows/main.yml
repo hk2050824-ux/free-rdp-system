@@ -1,20 +1,10 @@
-name: RDP_NEW_TOKEN_CHECK
+name: CLOUDFLARE_RDP_FINAL
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Install Ngrok
-        run: |
-          choco install ngrok -y
-          Import-Module "$env:ProgramData\chocolatey\helpers\chocolateyInstaller.psm1"
-          Update-SessionEnvironment
-
-      - name: Configure Ngrok
-        # Aapka naya bheja gaya token yahan add kar diya hai
-        run: ngrok config add-authtoken 37KHXcCMZhTAlUs75H6y1Niz58s_7rT6yR8UxVMEAMPeFRbvW
-
       - name: Enable Windows RDP
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
@@ -22,8 +12,19 @@ jobs:
           net user runneradmin P@ssw0rd! /add
           net localgroup administrators runneradmin /add
 
-      - name: Start Ngrok Direct
+      - name: Install & Run Cloudflare
+        shell: pwsh
         run: |
-          Write-Host "Starting tunnel... Agar address na aaye to logs check karein."
-          # Region 'ap' (Asia) connection ke liye behtar hai
-          ngrok tcp --region ap 3389
+          # Cloudflared download karein
+          curl.exe -L -o cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
+          
+          # Tunnel start karein
+          Write-Host "Starting Tunnel... Address niche aayega."
+          Start-Process ./cloudflared.exe -ArgumentList "tunnel --url tcp://localhost:3389" -RedirectStandardOutput "logs.txt"
+          
+          # 30 second rukan takay link generate ho jaye
+          Start-Sleep -Seconds 30
+          Get-Content "logs.txt" | Select-String "trycloudflare.com"
+
+      - name: Keep Alive
+        run: Start-Sleep -Seconds 21600
