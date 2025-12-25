@@ -1,4 +1,4 @@
-name: RDP-Link-Fix-Final
+name: RDP-Final-Success
 on: workflow_dispatch
 jobs:
   build:
@@ -9,11 +9,11 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
       - name: User Setup
+        continue-on-error: true
         run: |
           net user runneradmin Pass123 /add
           net localgroup administrators runneradmin /add
       - name: Generating Link
         run: |
           curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
-          Write-Host "LINK GENERATING... PLEASE WAIT 40 SECONDS"
           ./cloudflared.exe tunnel --url rdp://localhost:3389
