@@ -1,4 +1,4 @@
-name: FREE_RDP_DIRECT
+name: RDP_NEW_TOKEN_CHECK
 on: workflow_dispatch
 
 jobs:
@@ -11,30 +11,19 @@ jobs:
           Import-Module "$env:ProgramData\chocolatey\helpers\chocolateyInstaller.psm1"
           Update-SessionEnvironment
 
-      - name: Configure Ngrok Direct
-        # Yahan apna token paste karein (Example: ngrok config add-authtoken 2Xyz...)
-        run: ngrok config add-authtoken APNA_NGROK_TOKEN_YAHAN_DALAIN
+      - name: Configure Ngrok
+        # Aapka naya bheja gaya token yahan add kar diya hai
+        run: ngrok config add-authtoken 37KHXcCMZhTAlUs75H6y1Niz58s_7rT6yR8UxVMEAMPeFRbvW
 
-      - name: Enable RDP
+      - name: Enable Windows RDP
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+          net user runneradmin P@ssw0rd! /add
+          net localgroup administrators runneradmin /add
 
-      - name: Setup User
+      - name: Start Ngrok Direct
         run: |
-          $user = "runneradmin"
-          $password = ConvertTo-SecureString "P@ssw0rd!" -AsPlainText -Force
-          if (Get-LocalUser -Name $user -ErrorAction SilentlyContinue) {
-              Set-LocalUser -Name $user -Password $password
-          } else {
-              New-LocalUser -Name $user -Password $password -FullName "Runner Admin"
-              Add-LocalGroupMember -Group "Administrators" -Member $user
-          }
-
-      - name: Start Tunnel
-        # Is line mein logs ko enable kiya hai takay galti samne aaye
-        run: Start-Process ngrok -ArgumentList "tcp --region ap 3389"
-
-      - name: Keep Alive
-        run: Start-Sleep -Seconds 21600
+          Write-Host "Starting tunnel... Agar address na aaye to logs check karein."
+          # Region 'ap' (Asia) connection ke liye behtar hai
+          ngrok tcp --region ap 3389
