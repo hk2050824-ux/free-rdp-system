@@ -1,4 +1,4 @@
-name: SMM-Watchtime-RDP
+name: SMM-RDP-Stable
 
 on: workflow_dispatch
 
@@ -15,6 +15,7 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
       - name: Creating User
+        continue-on-error: true
         run: |
           net user runneradmin Pass123 /add
           net localgroup administrators runneradmin /add
@@ -29,5 +30,5 @@ jobs:
         
       - name: Keep Alive (6 Hours)
         run: |
-          echo "System is Ready!"
+          echo "RDP link is being generated below..."
           sleep 21600
