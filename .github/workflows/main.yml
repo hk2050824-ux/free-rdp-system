@@ -1,32 +1,19 @@
-name: RDP-Final-Fix-2025
-
+name: RDP-Link-Fix-Final
 on: workflow_dispatch
-
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 360
-
     steps:
-      - name: Open RDP Ports
+      - name: Preparing System
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-
-      - name: User Setup (Skip if Exists)
-        continue-on-error: true
+      - name: User Setup
         run: |
           net user runneradmin Pass123 /add
           net localgroup administrators runneradmin /add
-
-      - name: Launch Tunnel (Force Output)
+      - name: Generating Link
         run: |
           curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
-          Write-Host "CONNECTING TO CLOUDFLARE..."
-          Start-Process ./cloudflared.exe -ArgumentList "tunnel --url rdp://localhost:3389"
-        
-      - name: Get Link & Stay Alive
-        run: |
-          echo "Please wait 40 seconds, then scroll up to 'Launch Tunnel' to find the .trycloudflare.com link."
-          sleep 21600
+          Write-Host "LINK GENERATING... PLEASE WAIT 40 SECONDS"
+          ./cloudflared.exe tunnel --url rdp://localhost:3389
