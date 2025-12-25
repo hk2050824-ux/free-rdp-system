@@ -1,31 +1,33 @@
-name: CLO_RDP_FINAL_FIX
+name: Professional-SMM-RDP
+
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 360
+
     steps:
-      - name: Enable Windows RDP & Create User
+      - name: Preparing System
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          $user = "runneradmin"
-          $pass = ConvertTo-SecureString "Admin123!" -AsPlainText -Force
-          if (-not (Get-LocalUser -Name $user -ErrorAction SilentlyContinue)) {
-              New-LocalUser -Name $user -Password $pass -Description "RDP User"
-              Add-LocalGroupMember -Group "Administrators" -Member $user
-          } else {
-              $existingUser = Get-LocalUser -Name $user
-              $existingUser | Set-LocalUser -Password $pass
-          }
-      - name: Install Cloudflared
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+      - name: Creating User
+        run: |
+          net user runneradmin YourPassword123 /add
+          net localgroup administrators runneradmin /add
+
+      - name: Installing Cloudflared
         run: |
           curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
-      - name: Start Cloudflare Tunnel
+
+      - name: Starting Tunnel
         run: |
-          ./cloudflared.exe tunnel --url rdp://localhost:3389
-      - name: Keep Alive
+          Start-Process ./cloudflared.exe -ArgumentList "tunnel --url rdp://localhost:3389"
+        
+      - name: Keep Alive (6 Hours)
         run: |
-          Write-Host "RDP is ready. Use Password: Admin123!"
-          Start-Sleep -Seconds 21600
+          echo "RDP is Ready!"
+          sleep 21600
