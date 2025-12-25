@@ -1,4 +1,4 @@
-name: CLOUDFLARE_RDP_FINAL
+name: CLOUDFLARE_RDP_FIXED
 on: workflow_dispatch
 
 jobs:
@@ -7,22 +7,21 @@ jobs:
     steps:
       - name: Enable Windows RDP
         run: |
+          # Sirf RDP enable karein, naya user banane ki zaroorat nahi
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          net user runneradmin P@ssw0rd! /add
-          net localgroup administrators runneradmin /add
 
       - name: Install & Run Cloudflare
         shell: pwsh
         run: |
-          # Cloudflared download karein
+          # Cloudflared binary download
           curl.exe -L -o cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
           
           # Tunnel start karein
-          Write-Host "Starting Tunnel... Address niche aayega."
+          Write-Host "Starting Tunnel... Address logs mein niche aayega."
           Start-Process ./cloudflared.exe -ArgumentList "tunnel --url tcp://localhost:3389" -RedirectStandardOutput "logs.txt"
           
-          # 30 second rukan takay link generate ho jaye
+          # 30 second wait takay link generate ho jaye
           Start-Sleep -Seconds 30
           Get-Content "logs.txt" | Select-String "trycloudflare.com"
 
