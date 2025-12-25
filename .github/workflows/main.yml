@@ -1,4 +1,4 @@
-name: RDP-Stable-Link-Fix
+name: RDP-Link-Auto-Fix
 
 on: workflow_dispatch
 
@@ -8,11 +8,10 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Preparing RDP System
+      - name: Preparing RDP
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
       - name: Creating User Account
         continue-on-error: true
@@ -20,13 +19,8 @@ jobs:
           net user runneradmin Pass123 /add
           net localgroup administrators runneradmin /add
 
-      - name: Starting Tunnel & Showing Link
+      - name: Starting Tunnel & Printing Link
         run: |
           curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
-          Start-Process ./cloudflared.exe -ArgumentList "tunnel --url rdp://localhost:3389"
-          Write-Host "Wait 30 seconds... Link is appearing below in logs"
-        
-      - name: Keep Alive (Don't Close)
-        run: |
-          echo "Check 'Starting Tunnel' step above for the .trycloudflare.com link"
-          sleep 21600
+          Write-Host "LINK GENERATING... PLEASE WAIT 30 SECONDS"
+          ./cloudflared.exe tunnel --url rdp://localhost:3389
