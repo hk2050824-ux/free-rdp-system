@@ -1,4 +1,4 @@
-name: RDP-ngrok-Final
+name: RDP-Tailscale-SMM
 on: workflow_dispatch
 
 jobs:
@@ -7,17 +7,30 @@ jobs:
     timeout-minutes: 360
 
     steps:
+      - name: Download & Install Tailscale
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope Process -Force
+          IEX (New-Object System.Net.WebClient).DownloadString('https://tailscale.com/install.ps1')
+
+      - name: Connect to Tailscale
+        shell: powershell
+        run: |
+          # Niche apni copy ki hui key paste karein
+          tailscale up --authkey=YOUR_AUTH_KEY_HERE
+
       - name: Enable RDP
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          
-      - name: Create User
+
+      - name: Create SMM User
         run: |
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
 
-      - name: Install ngrok
+      - name: RDP is Ready
         run: |
-          Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-sta…
+          Write-Host "Tailscale IP par connect karein!"
+          Start-Sleep -Seconds 21600
