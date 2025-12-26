@@ -1,4 +1,4 @@
-name: RDP-Tailscale-SMM
+name: RDP-Tailscale-Final-SMM
 on: workflow_dispatch
 
 jobs:
@@ -16,8 +16,8 @@ jobs:
       - name: Connect to Tailscale
         shell: powershell
         run: |
-          # Niche apni copy ki hui key paste karein
-          tailscale up --authkey=YOUR_AUTH_KEY_HERE
+          # Aapki generated key yahan add kar di gayi hai
+          tailscale up --authkey=tskey-auth-kCf4DKmbMw11CNTRL-ELPWnJbdLL8QuGCESyNWL8hiDjWYh7dj
 
       - name: Enable RDP
         run: |
