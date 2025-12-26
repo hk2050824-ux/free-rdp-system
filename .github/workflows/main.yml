@@ -18,8 +18,9 @@ jobs:
         env:
           TS_KEY: ${{ secrets.TS_AUTH_KEY }}
         run: |
-          # Secret se key utha kar connect karna
-          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=$env:TS_KEY
+          # Key ko handle karne ka sabse sahi tareeka
+          $authKey = "$env:TS_KEY"
+          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey="$authKey" --accept-routes
 
       - name: Enable RDP
         run: |
