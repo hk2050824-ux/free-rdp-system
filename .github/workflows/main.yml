@@ -1,17 +1,27 @@
 - name: Setup RDP & Cloudflare
         run: |
-          # Cloudflare download aur setup
+          # 1. Cloudflare Download
           Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
+          
+          # 2. RDP User Setup
           net user SMMExpert Pass123 /add
           net localgroup "Remote Desktop Users" SMMExpert /add
           net localgroup "Administrators" SMMExpert /add
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           
-          # Tunnel start karke link ko file mein save karna taake logs mein dikhe
-          Start-Process "./cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -RedirectStandardError "cloudflare_log.txt"
+          # 3. Tunnel Start (Link ko capture karne ke liye)
+          Write-Host "Generating RDP Link... Please wait 30 seconds."
+          Start-Process "./cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -RedirectStandardError "link.txt"
           
-          # 30 seconds wait karein taake link generate ho jaye
-          Start-Sleep -Seconds 30
+          # 4. Wait for link generation
+          Start-Sleep -Seconds 35
           
-          # Logs mein link print karein
-          Get-Content "cloudflare_log.txt" | Select-String "trycloudflare.com"
+          # 5. Forcefully print the link in logs
+          $content = Get-Content "link.txt"
+          foreach($line in $content) {
+            if($line -match "trycloudflare.com") {
+              Write-Host "====================================" -ForegroundColor Cyan
+              Write-Host "YOUR RDP LINK IS: $line" -ForegroundColor Green
+              Write-Host "====================================" -ForegroundColor Cyan
+            }
+          }
