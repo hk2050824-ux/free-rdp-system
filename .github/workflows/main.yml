@@ -1,4 +1,4 @@
-name: RDP-Via-Cloudflare
+name: RDP-Final-Success
 on: workflow_dispatch
 
 jobs:
@@ -7,29 +7,31 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Setup RDP and User
+      - name: Setup User and RDP
         run: |
-          # User create karna aur RDP enable karna
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+          powershell Enable-NetFirewallRule -DisplayGroup "'Remote Desktop'"
 
-      - name: Install Cloudflared
+      - name: Download Cloudflared Portable
         run: |
-          # Cloudflare tunnel download karna
-          curl.exe -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi -o cloudflared.msi
-          msiexec.exe /i cloudflared.msi /qn
+          # Portable file download karna jo direct chalti hai
+          curl.exe -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -o cloudflared.exe
 
-      - name: Start Cloudflare Tunnel
+      - name: Start Tunnel (Direct Path)
         shell: powershell
         run: |
-          # Tunnel start karke link nikalna
-          Start-Process -FilePath "cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -RedirectStandardOutput "tunnel_log.txt"
-          Start-Sleep -Seconds 20
+          # Seedha isi folder se cloudflared chalana
+          Start-Process -FilePath ".\cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -RedirectStandardOutput "tunnel_log.txt"
+          Start-Sleep -Seconds 30
           $log = Get-Content "tunnel_log.txt" | Select-String "trycloudflare.com"
-          Write-Host "----------------------------------------------------"
-          Write-Host "Aapka RDP Address ye hai: $($log.Matches.Value)"
-          Write-Host "----------------------------------------------------"
+          if ($log) {
+              Write-Host "----------------------------------------------------"
+              Write-Host "Aapka RDP Address ye hai: $($log.Matches.Value)"
+              Write-Host "----------------------------------------------------"
+          } else {
+              Write-Host "Address nahi mila, logs check karein:"
+              Get-Content "tunnel_log.txt"
+          }
           Start-Sleep -Seconds 21600
