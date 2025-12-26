@@ -1,4 +1,4 @@
-name: RDP-Final-Solid-Solution
+name: RDP-Final-No-Input-Error
 on: workflow_dispatch
 
 jobs:
@@ -7,37 +7,31 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Install Tailscale
-        shell: cmd
-        run: |
-          :: Direct download aur installation
-          curl.exe -L https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
-          start /wait tailscale-setup.exe /quiet /norestart
-          :: System ko file register karne ka waqt dena
-          timeout /t 20 /nobreak
-
-      - name: Connect Using Direct Path
+      - name: Install Tailscale MSI
         shell: powershell
         run: |
-          $tailscale = "C:\Program Files\Tailscale\tailscale.exe"
-          if (Test-Path $tailscale) {
-              # Direct key use karna bina kisi variable ke
-              & $tailscale up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=SMM-Expert-RDP
-          } else {
-              Write-Host "Tailscale ki file nahi mili, location check karein!"
-              exit 1
-          }
+          # MSI download aur silent install
+          $url = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.msi"
+          $outpath = "$PSScriptRoot\tailscale.msi"
+          Invoke-WebRequest -Uri $url -OutFile $outpath
+          Start-Process msiexec.exe -ArgumentList "/i $outpath /qn /norestart" -Wait
 
-      - name: Setup User and RDP
+      - name: Connect to Tailscale
+        shell: cmd
+        run: |
+          :: Direct path se connect karna taake koi input error na aaye
+          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=SMM-RDP
+
+      - name: Setup RDP and User
         shell: cmd
         run: |
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
           reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-          enable-netfirewallrule -displaygroup "Remote Desktop"
+          powershell Enable-NetFirewallRule -DisplayGroup "'Remote Desktop'"
 
       - name: Keep Alive
         shell: powershell
         run: |
-          Write-Host "Tailscale Dashboard par 'SMM-Expert-RDP' check karein!"
+          Write-Host "Tailscale Dashboard par 'SMM-RDP' check karein!"
           Start-Sleep -Seconds 21600
