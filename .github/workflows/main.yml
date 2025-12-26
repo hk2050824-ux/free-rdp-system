@@ -1,4 +1,4 @@
-name: RDP-Tailscale-Fixed-Final
+name: RDP-Tailscale-Direct-Fix
 on: workflow_dispatch
 
 jobs:
@@ -14,27 +14,26 @@ jobs:
           start /wait tailscale-setup.exe /quiet /norestart
 
       - name: Connect to Tailscale
-        shell: pwsh
-        env:
-          TS_KEY: ${{ secrets.TS_AUTH_KEY }}
+        shell: cmd
         run: |
-          # Key ko variable mein load karke double quotes ke sath chalana
-          $key = "$env:TS_KEY"
-          if (-not $key) { Write-Error "Secret Key nahi mili!"; exit 1 }
-          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey="$key" --accept-routes --hostname="GitHub-RDP"
+          :: Direct key connection without variables
+          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=SMM-Expert-RDP
 
       - name: Enable RDP
+        shell: powershell
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
       - name: Create SMM User
+        shell: cmd
         run: |
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
 
       - name: RDP is Ready
+        shell: powershell
         run: |
-          Write-Host "Tailscale Dashboard par 'GitHub-RDP' ka IP check karein!"
+          Write-Host "Tailscale Dashboard par 'SMM-Expert-RDP' check karein!"
           Start-Sleep -Seconds 21600
