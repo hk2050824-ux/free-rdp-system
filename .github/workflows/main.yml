@@ -1,4 +1,4 @@
-name: RDP-Tailscale-Final-SMM
+name: RDP-Tailscale-Final-Fixed
 on: workflow_dispatch
 
 jobs:
@@ -7,17 +7,18 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Download & Install Tailscale
+      - name: Install Tailscale
         shell: powershell
         run: |
-          Set-ExecutionPolicy RemoteSigned -Scope Process -Force
-          IEX (New-Object System.Net.WebClient).DownloadString('https://tailscale.com/install.ps1')
+          # Sahi installation command
+          curl.exe -L https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
+          Start-Process -FilePath .\tailscale-setup.exe -ArgumentList '/quiet /norestart' -Wait
 
       - name: Connect to Tailscale
         shell: powershell
         run: |
-          # Aapki generated key yahan add kar di gayi hai
-          tailscale up --authkey=tskey-auth-kCf4DKmbMw11CNTRL-ELPWnJbdLL8QuGCESyNWL8hiDjWYh7dj
+          # Aapki key yahan set hai
+          & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey=tskey-auth-kCf4DKmbMw11CNTRL-ELPWnJbdLL8QuGCESyNWL8hiDjWYh7dj
 
       - name: Enable RDP
         run: |
@@ -32,5 +33,5 @@ jobs:
 
       - name: RDP is Ready
         run: |
-          Write-Host "Tailscale IP par connect karein!"
+          Write-Host "Tailscale IP check karein aur connect karein!"
           Start-Sleep -Seconds 21600
