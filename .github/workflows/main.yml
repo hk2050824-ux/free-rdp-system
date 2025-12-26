@@ -1,4 +1,4 @@
-name: RDP-Tailscale-Final-NoFail
+name: RDP-Final-Authentic-Method
 on: workflow_dispatch
 
 jobs:
@@ -7,28 +7,26 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Tailscale Connection (Official)
-        uses: tailscale/github-action@v2
-        with:
-          authkey: tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m
-
-      - name: Setup Remote Desktop
-        shell: powershell
+      - name: Install Tailscale via Chocolatey
         run: |
-          # RDP settings activate karna
+          choco install tailscale --fixed -y
+          refreshenv
+
+      - name: Connect to Tailscale (Direct Method)
+        shell: cmd
+        run: |
+          :: Sabse authentic command direct key ke sath
+          tailscale up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=Final-SMM-PC
+
+      - name: Setup RDP and User
+        run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          
-          # User aur Password create karna
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
 
-      - name: RDP is Running
-        shell: powershell
+      - name: Keep Alive
         run: |
-          Write-Host "Tailscale Dashboard par check karein!"
+          Write-Host "Tailscale Dashboard check karein!"
           Start-Sleep -Seconds 21600
