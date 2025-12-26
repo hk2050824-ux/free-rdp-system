@@ -1,4 +1,4 @@
-name: RDP-Tailscale-Final-Fixed
+name: RDP-Tailscale-Final-NoFail
 on: workflow_dispatch
 
 jobs:
@@ -7,36 +7,28 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Install Tailscale
-        shell: cmd
-        run: |
-          curl.exe -L https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
-          start /wait tailscale-setup.exe /quiet /norestart
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Connect to Tailscale
+      - name: Tailscale Connection (Official)
+        uses: tailscale/github-action@v2
+        with:
+          authkey: tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m
+
+      - name: Setup Remote Desktop
         shell: powershell
         run: |
-          # File path check karke connect karna
-          $tsPath = "C:\Program Files\Tailscale\tailscale.exe"
-          if (Test-Path $tsPath) {
-              & $tsPath up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=SMM-Expert-PC
-          } else {
-              Write-Host "Tailscale install nahi hua, dobara koshish kar rahe hain..."
-              & tailscale up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=SMM-Expert-PC
-          }
-
-      - name: Enable RDP
-        run: |
+          # RDP settings activate karna
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-
-      - name: Create SMM User
-        run: |
+          
+          # User aur Password create karna
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
 
-      - name: RDP is Ready
+      - name: RDP is Running
+        shell: powershell
         run: |
-          Write-Host "Tailscale Dashboard par 'SMM-Expert-PC' check karein!"
+          Write-Host "Tailscale Dashboard par check karein!"
           Start-Sleep -Seconds 21600
