@@ -8,15 +8,17 @@ jobs:
 
     steps:
       - name: Install Tailscale
-        shell: powershell
-        run: |
-          curl.exe -L https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
-          Start-Process -FilePath .\tailscale-setup.exe -ArgumentList '/quiet /norestart' -Wait
-
-      - name: Connect to Tailscale
         shell: cmd
         run: |
-          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m
+          curl.exe -L https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
+          start /wait tailscale-setup.exe /quiet /norestart
+
+      - name: Connect to Tailscale
+        shell: pwsh
+        run: |
+          # Nayi key ko variable mein rakh kar connect karna
+          $key = "tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m"
+          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=$key
 
       - name: Enable RDP
         run: |
@@ -31,5 +33,5 @@ jobs:
 
       - name: RDP is Ready
         run: |
-          Write-Host "Tailscale Dashboard check karein!"
+          Write-Host "Tailscale Dashboard par IP check karein!"
           Start-Sleep -Seconds 21600
