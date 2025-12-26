@@ -1,4 +1,4 @@
-name: RDP-Final-Solid-Fix
+name: RDP-Via-Ngrok
 on: workflow_dispatch
 
 jobs:
@@ -7,35 +7,36 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Download and Install Tailscale
-        shell: cmd
+      - name: Download Ngrok
         run: |
-          :: Direct download using curl
-          curl.exe -L https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
-          :: Silent installation
-          start /wait tailscale-setup.exe /quiet /norestart
+          curl.exe -L https://bin.equinox.io/c/b342PmqRi29/ngrok-v3-stable-windows-amd64.zip -o ngrok.zip
+          Expand-Archive ngrok.zip
 
-      - name: Connect to Tailscale
-        shell: cmd
+      - name: Authenticate Ngrok
         run: |
-          :: Wait for service to start
-          timeout /t 15 /nobreak
-          :: Connect using direct path to avoid "not recognized" error
-          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=Final-SMM-RDP
+          .\ngrok\ngrok.exe config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
 
-      - name: Setup RDP and User
-        shell: cmd
+      - name: Enable RDP
         run: |
-          :: Create SMM user
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+      - name: Create SMM User
+        run: |
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
-          :: Enable RDP in registry
-          reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-          :: Enable Firewall
-          powershell Enable-NetFirewallRule -DisplayGroup "'Remote Desktop'"
 
-      - name: Keep Alive
-        shell: powershell
+      - name: Start Ngrok Tunnel
         run: |
-          Write-Host "Tailscale Dashboard par 'Final-SMM-RDP' check karein!"
+          Start-Process -FilePath ".\ngrok\ngrok.exe" -ArgumentList "tcp 3389"
+          Start-Sleep -Seconds 10
+
+      - name: Get RDP Address
+        run: |
+          $response = Invoke-RestMethod -Uri http://localhost:4040/api/tunnels
+          $rdp_address = $response.tunnels[0].public_url
+          Write-Host "-------------------------------------------"
+          Write-Host "Aapka RDP Address ye hai: $rdp_address"
+          Write-Host "-------------------------------------------"
           Start-Sleep -Seconds 21600
