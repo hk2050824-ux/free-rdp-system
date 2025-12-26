@@ -1,4 +1,4 @@
-name: RDP-Tailscale-Final-Fixed
+name: RDP-Tailscale-Fixed-Final
 on: workflow_dispatch
 
 jobs:
@@ -18,9 +18,10 @@ jobs:
         env:
           TS_KEY: ${{ secrets.TS_AUTH_KEY }}
         run: |
-          # Key ko handle karne ka sabse sahi tareeka
-          $authKey = "$env:TS_KEY"
-          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey="$authKey" --accept-routes
+          # Key ko variable mein load karke double quotes ke sath chalana
+          $key = "$env:TS_KEY"
+          if (-not $key) { Write-Error "Secret Key nahi mili!"; exit 1 }
+          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey="$key" --accept-routes --hostname="GitHub-RDP"
 
       - name: Enable RDP
         run: |
@@ -35,5 +36,5 @@ jobs:
 
       - name: RDP is Ready
         run: |
-          Write-Host "Tailscale Dashboard par IP check karein!"
+          Write-Host "Tailscale Dashboard par 'GitHub-RDP' ka IP check karein!"
           Start-Sleep -Seconds 21600
