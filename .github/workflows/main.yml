@@ -1,4 +1,4 @@
-name: RDP-Final-Authentic-Method
+name: RDP-Final-Solid-Method
 on: workflow_dispatch
 
 jobs:
@@ -7,26 +7,30 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Install Tailscale via Chocolatey
-        run: |
-          choco install tailscale --fixed -y
-          refreshenv
-
-      - name: Connect to Tailscale (Direct Method)
+      - name: Download and Install
         shell: cmd
         run: |
-          :: Sabse authentic command direct key ke sath
-          tailscale up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=Final-SMM-PC
+          :: Direct download without extra tools
+          curl.exe -L https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
+          start /wait tailscale-setup.exe /quiet /norestart
 
-      - name: Setup RDP and User
+      - name: Connect with Full Path
+        shell: cmd
         run: |
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          :: Path ka issue khatam karne ke liye direct file location use karna
+          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=SMM-Expert-PC
+
+      - name: Setup RDP User
+        shell: cmd
+        run: |
+          :: User create karna
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
+          :: RDP enable karna
+          reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
 
       - name: Keep Alive
+        shell: powershell
         run: |
-          Write-Host "Tailscale Dashboard check karein!"
+          Write-Host "Tailscale Dashboard par 'SMM-Expert-PC' check karein!"
           Start-Sleep -Seconds 21600
