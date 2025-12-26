@@ -14,11 +14,9 @@ jobs:
           Start-Process -FilePath .\tailscale-setup.exe -ArgumentList '/quiet /norestart' -Wait
 
       - name: Connect to Tailscale
-        shell: powershell
-        env:
-          TS_KEY: ${{ secrets.TAILSCALE_KEY }}
+        shell: cmd
         run: |
-          & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey=$env:TS_KEY
+          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m
 
       - name: Enable RDP
         run: |
