@@ -1,4 +1,4 @@
-name: RDP-Final-No-Input-Error
+name: RDP-Final-Solid-Fix
 on: workflow_dispatch
 
 jobs:
@@ -7,31 +7,35 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Install Tailscale MSI
-        shell: powershell
+      - name: Download and Install Tailscale
+        shell: cmd
         run: |
-          # MSI download aur silent install
-          $url = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.msi"
-          $outpath = "$PSScriptRoot\tailscale.msi"
-          Invoke-WebRequest -Uri $url -OutFile $outpath
-          Start-Process msiexec.exe -ArgumentList "/i $outpath /qn /norestart" -Wait
+          :: Direct download using curl
+          curl.exe -L https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
+          :: Silent installation
+          start /wait tailscale-setup.exe /quiet /norestart
 
       - name: Connect to Tailscale
         shell: cmd
         run: |
-          :: Direct path se connect karna taake koi input error na aaye
-          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=SMM-RDP
+          :: Wait for service to start
+          timeout /t 15 /nobreak
+          :: Connect using direct path to avoid "not recognized" error
+          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kkTv31Yojt11CNTRL-HaxAxQjmXV9ZGKCvvwXtV9ziY2WxYP8m --accept-routes --hostname=Final-SMM-RDP
 
       - name: Setup RDP and User
         shell: cmd
         run: |
+          :: Create SMM user
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
+          :: Enable RDP in registry
           reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+          :: Enable Firewall
           powershell Enable-NetFirewallRule -DisplayGroup "'Remote Desktop'"
 
       - name: Keep Alive
         shell: powershell
         run: |
-          Write-Host "Tailscale Dashboard par 'SMM-RDP' check karein!"
+          Write-Host "Tailscale Dashboard par 'Final-SMM-RDP' check karein!"
           Start-Sleep -Seconds 21600
