@@ -5,15 +5,15 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 1440  # 24 ghante (1440 mins)
+    timeout-minutes: 1440  # 24 ghante ka time
 
     steps:
       - name: Preparing Environment
         run: |
-          # Username aur Password create karna
+          # Username aur Password setup
           net user SMMExpert Pass123 /add
           net localgroup administrators SMMExpert /add
-          echo "User Created Successfully!"
+          echo "User Created!"
 
       - name: Install Cloudflared
         run: |
@@ -26,17 +26,7 @@ jobs:
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
 
-      - name: Start Cloudflare Tunnel
+      - name: Generate Link and Start RDP
         run: |
-          # Is se aapka naya link generate hoga
-          Start-Process powershell -ArgumentList "-NoExit -Command .\cloudflared.exe tunnel --url rdp://localhost:3389"
-
-      - name: Wait for 24 Hours
-        run: |
-          # Machine ko 24 ghante zinda rakhne ke liye
-          $loop = 144
-          while($loop -gt 0) {
-            Write-Host "RDP is Running... Time Remaining: $($loop * 10) minutes"
-            Start-Sleep -Seconds 600
-            $loop--
-          }
+          # Is step mein aapko trycloudflare.com wala link nazar ayega
+          .\cloudflared.exe tunnel --url rdp://localhost:3389
