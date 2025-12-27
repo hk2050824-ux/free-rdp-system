@@ -1,33 +1,42 @@
-name: Watchtime-15Hour-SMM
-on:
+name: 24h Windows RDP
+on: 
   workflow_dispatch:
-  schedule:
-    - cron: "0 */6 * * *"
 
 jobs:
   build:
     runs-on: windows-latest
-    steps:
-      - name: Setup RDP & Cloudflare
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
-          net user SMMExpert Pass123 /add
-          net localgroup "Remote Desktop Users" SMMExpert /add
-          net localgroup "Administrators" SMMExpert /add
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Write-Host "Generating Link... Please wait 35s"
-          Start-Process "./cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -RedirectStandardError "link_log.txt"
-          Start-Sleep -Seconds 35
-          Get-Content "link_log.txt" | Select-String "trycloudflare.com"
+    timeout-minutes: 1440  # 24 ghante (1440 mins)
 
-      - name: Automated-Watchtime-Engine
+    steps:
+      - name: Preparing Environment
         run: |
-          $PlaylistURL = "https://youtube.com/playlist?list=PL4nAU-8Arfz_ifcf_FzeQSCRVyawBdS5z"
-          for ($i=1; $i -le 3; $i++) {
-            $UserDir = "C:\SMM_Profiles\Profile_$i"
-            Start-Process "chrome.exe" -ArgumentList "--url=$PlaylistURL", "--user-data-dir=$UserDir", "--disable-blink-features=AutomationControlled", "--no-sandbox", "--mute-audio", "--disable-background-timer-throttling"
-            Write-Host "Profile $i started successfully."
-            Start-Sleep -Seconds 15
+          # Username aur Password create karna
+          net user SMMExpert Pass123 /add
+          net localgroup administrators SMMExpert /add
+          echo "User Created Successfully!"
+
+      - name: Install Cloudflared
+        run: |
+          curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
+          echo "Cloudflared Installed"
+
+      - name: Enable Remote Desktop
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+
+      - name: Start Cloudflare Tunnel
+        run: |
+          # Is se aapka naya link generate hoga
+          Start-Process powershell -ArgumentList "-NoExit -Command .\cloudflared.exe tunnel --url rdp://localhost:3389"
+
+      - name: Wait for 24 Hours
+        run: |
+          # Machine ko 24 ghante zinda rakhne ke liye
+          $loop = 144
+          while($loop -gt 0) {
+            Write-Host "RDP is Running... Time Remaining: $($loop * 10) minutes"
+            Start-Sleep -Seconds 600
+            $loop--
           }
-          Start-Sleep -Seconds 54000
-        shell: powershell
