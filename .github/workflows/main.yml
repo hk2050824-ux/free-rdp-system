@@ -1,4 +1,4 @@
-name: SMM_FINAL_SUCCESS
+name: SMM_SUCCESS_NO_ERROR
 on:
   workflow_dispatch:
 
@@ -8,9 +8,9 @@ jobs:
     steps:
       - name: Preparing Environment
         run: |
+          # Downloading Ngrok
           Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
           Expand-Archive ngrok.zip
-          ./ngrok/ngrok.exe authtoken 37Sxtkon7olcYY4aafLCxNCoOB6_65cTbL9ZTwDY3ofR6uxhS
           
       - name: Setting Up RDP
         run: |
@@ -20,17 +20,9 @@ jobs:
           net localgroup "Remote Desktop Users" SMMUser /add
           net localgroup "Administrators" SMMUser /add
           
-      - name: Start Tunnel & Show Link
-        shell: cmd
+      - name: Launch Tunnel
         run: |
-          start "" .\ngrok\ngrok.exe tcp 3389
-          timeout /t 20
-          curl http://localhost:4040/api/tunnels
-          
-      - name: Keep Alive (24 Hours)
-        run: |
-          $val = 24
-          for($i=1; $i -le $val; $i++) {
-            Write-Host "Machine is Active - Running Watchtime - Hour $i"
-            Start-Sleep -Seconds 3600
-          }
+          # Ye command logs mein hi link dikha degi
+          ./ngrok/ngrok.exe authtoken 37Sxtkon7olcYY4aafLCxNCoOB6_65cTbL9ZTwDY3ofR6uxhS
+          Write-Host "RDP Starting... Please wait 20 seconds for the link below."
+          ./ngrok/ngrok.exe tcp 3389 --log=stdout
