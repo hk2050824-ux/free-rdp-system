@@ -1,4 +1,4 @@
-name: SMM_WATCHTIME_SUCCESS
+name: SMM_FINAL_SUCCESS
 on:
   workflow_dispatch:
 
@@ -10,9 +10,7 @@ jobs:
         run: |
           Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
           Expand-Archive ngrok.zip
-          # Aapka Token yahan laga hua hai
-          ./ngrok/ngrok.exe authtoken 37Sxtkon7olcYY4aafLCxNCoOB6_65cTbL9ZTwDY3ofR6uxhS 
-          Start-Process ./ngrok/ngrok.exe -ArgumentList "tcp 3389"
+          ./ngrok/ngrok.exe authtoken 37Sxtkon7olcYY4aafLCxNCoOB6_65cTbL9ZTwDY3ofR6uxhS
           
       - name: Setting Up RDP
         run: |
@@ -22,18 +20,12 @@ jobs:
           net localgroup "Remote Desktop Users" SMMUser /add
           net localgroup "Administrators" SMMUser /add
           
-      - name: View RDP Link
+      - name: Start Tunnel & Show Link
+        shell: cmd
         run: |
-          Write-Host "Ngrok start hone ke liye 30 seconds wait kar rahe hain..."
-          Start-Sleep -Seconds 30
-          # Link fetch karne ki koshish
-          $response = curl http://localhost:4040/api/tunnels
-          $n = $response | ConvertFrom-Json
-          $url = $n.tunnels.public_url
-          Write-Host "--- CONNECTION SUCCESSFUL ---"
-          Write-Host "RDP Address: $url"
-          Write-Host "Username: SMMUser"
-          Write-Host "Password: Watchtime@123"
+          start "" .\ngrok\ngrok.exe tcp 3389
+          timeout /t 20
+          curl http://localhost:4040/api/tunnels
           
       - name: Keep Alive (24 Hours)
         run: |
