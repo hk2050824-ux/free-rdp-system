@@ -1,4 +1,4 @@
-name: SMM_FINAL_FIX_V2
+name: SMM_FINAL_SUCCESS_V3
 on:
   workflow_dispatch:
 
@@ -14,15 +14,15 @@ jobs:
           net localgroup "Remote Desktop Users" SMMUser /add
           net localgroup "Administrators" SMMUser /add
           
-      - name: Start Cloudflare Tunnel
+      - name: Generate RDP Link
         run: |
-          # Downloading Cloudflared
           Invoke-WebRequest https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi -OutFile cloudflared.msi
           Start-Process msiexec.exe -ArgumentList "/i cloudflared.msi /quiet" -Wait
-          
-          # Creating Tunnel and Printing Link
-          Write-Host "--- AAPKA RDP LINK NEECHE HAI ---"
+          Write-Host "--- NEECHE DIYE GAYE LINK KO COPY KAREIN ---"
+          # Ye command link ko logs mein show karegi
           Start-Process "cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389"
+          Start-Sleep -Seconds 20
+          Get-Content -Path "C:\Windows\System32\config\systemprofile\.cloudflared\*.log" | Select-String "trycloudflare.com"
           
       - name: Keep Alive (24 Hours)
         run: |
