@@ -1,4 +1,4 @@
-name: SMM_FINAL_SUCCESS_V3
+name: SMM_FIX_FINAL_V4
 on:
   workflow_dispatch:
 
@@ -16,13 +16,12 @@ jobs:
           
       - name: Generate RDP Link
         run: |
-          Invoke-WebRequest https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi -OutFile cloudflared.msi
-          Start-Process msiexec.exe -ArgumentList "/i cloudflared.msi /quiet" -Wait
+          # Downloading Cloudflared Binary directly to avoid install errors
+          Invoke-WebRequest https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
           Write-Host "--- NEECHE DIYE GAYE LINK KO COPY KAREIN ---"
-          # Ye command link ko logs mein show karegi
-          Start-Process "cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389"
-          Start-Sleep -Seconds 20
-          Get-Content -Path "C:\Windows\System32\config\systemprofile\.cloudflared\*.log" | Select-String "trycloudflare.com"
+          # Running directly from the current folder
+          Start-Process "./cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389"
+          Start-Sleep -Seconds 30
           
       - name: Keep Alive (24 Hours)
         run: |
