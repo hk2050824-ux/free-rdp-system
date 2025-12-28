@@ -1,46 +1,20 @@
-import time
-import undetected_chromedriver as uc
-import random
+name: SMM_Watchtime_24H
+on:
+  workflow_dispatch:
 
-def start_pro_viewer(profile_path, playlist_url):
-    try:
-        options = uc.ChromeOptions()
-        options.add_argument(f"--user-data-dir={profile_path}")
-        
-        # Professional Bypass Arguments
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--window-size=1280,720")
-        
-        driver = uc.Chrome(options=options)
-        driver.get(playlist_url)
-        time.sleep(random.randint(5, 10)) # Random wait taake bot na lagay
-
-        # Video Play aur Speed Auto-Set
-        driver.execute_script('''
-            var video = document.getElementsByTagName("video")[0];
-            if(video){
-                video.play();
-                video.playbackRate = 0.5; // 0.25x se behtar hai 0.5x taake detection kam ho
-                video.loop = true;
-            }
-        ''')
-        
-        # Human Behavior Simulation
-        driver.execute_script("window.scrollTo(0, 400);") 
-        print(f"Started Pro Profile: {profile_path}")
-        return driver
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
-
-# Aapki Playlist
-my_link = "https://youtube.com/playlist?list=PL4nAU-8Arfz_ifcf_FzeQSCRVyawBdS5z"
-profiles = ["C:/SMM_1", "C:/SMM_2"]
-active_drivers = []
-
-for p in profiles:
-    d = start_pro_viewer(p, my_link)
-    if d: active_drivers.append(d)
-
-input("Script Running... Press Enter to Stop.")
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Preparing RDP
+        run: |
+          # Yahan machine ko active rakhne ki commands hoti hain
+          echo "Machine is starting..."
+      - name: Keep Alive
+        run: |
+          # Ye command machine ko 24 ghante tak band nahi hone degi
+          $val = 24
+          for($i=1; $i -le $val; $i++) {
+            Write-Host "Keeping machine alive - Hour $i"
+            Start-Sleep -Seconds 3600
+          }
