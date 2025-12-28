@@ -1,4 +1,4 @@
-name: SMM_PRO_WATCHTIME
+name: SMM_PRO_FIXED
 on:
   workflow_dispatch:
 
@@ -8,25 +8,30 @@ jobs:
     steps:
       - name: Preparing Environment
         run: |
-          # Ngrok setup for stable link
+          # Downloading Ngrok for stable connection
           Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
           Expand-Archive ngrok.zip
-          # Aapna Ngrok Auth Token yahan lagayein agar hai, warna ye default chalega
-          ./ngrok/ngrok.exe authtoken YOUR_NGROK_AUTH_TOKEN_HERE 
+          # Agar aapka authtoken hai to yahan lagayein warna ye temporary chalega
+          # ./ngrok/ngrok.exe authtoken YOUR_TOKEN_HERE
           Start-Process ./ngrok/ngrok.exe -ArgumentList "tcp 3389"
           
-      - name: Setting Up RDP
+      - name: Setting Up RDP (Fixed Method)
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          LocalAccounts\New-LocalUser -Name "SMMUser" -Description "Watchtime User" -NoPassword
-          LocalAccounts\Add-LocalGroupMember -Group "Remote Desktop Users" -Member "SMMUser"
+          # Simple user creation without external modules
+          net user SMMUser Watchtime@123 /add
+          net localgroup "Remote Desktop Users" SMMUser /add
+          net localgroup "Administrators" SMMUser /add
           
       - name: View RDP Link
         run: |
           $n = curl http://localhost:4040/api/tunnels | ConvertFrom-Json
           $url = $n.tunnels.public_url
-          Write-Host "AAPKA RDP LINK YE HAI: $url"
+          Write-Host "--- COPY THIS LINK ---"
+          Write-Host "RDP Address: $url"
+          Write-Host "Username: SMMUser"
+          Write-Host "Password: Watchtime@123"
           
       - name: Keep Alive (24 Hours)
         run: |
