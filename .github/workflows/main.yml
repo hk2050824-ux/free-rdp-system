@@ -1,4 +1,4 @@
-name: SMM_Watchtime_24H
+name: SMM_PRO_WATCHTIME
 on:
   workflow_dispatch:
 
@@ -6,15 +6,32 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Preparing RDP
+      - name: Preparing Environment
         run: |
-          # Yahan machine ko active rakhne ki commands hoti hain
-          echo "Machine is starting..."
-      - name: Keep Alive
+          # Ngrok setup for stable link
+          Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+          Expand-Archive ngrok.zip
+          # Aapna Ngrok Auth Token yahan lagayein agar hai, warna ye default chalega
+          ./ngrok/ngrok.exe authtoken YOUR_NGROK_AUTH_TOKEN_HERE 
+          Start-Process ./ngrok/ngrok.exe -ArgumentList "tcp 3389"
+          
+      - name: Setting Up RDP
         run: |
-          # Ye command machine ko 24 ghante tak band nahi hone degi
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          LocalAccounts\New-LocalUser -Name "SMMUser" -Description "Watchtime User" -NoPassword
+          LocalAccounts\Add-LocalGroupMember -Group "Remote Desktop Users" -Member "SMMUser"
+          
+      - name: View RDP Link
+        run: |
+          $n = curl http://localhost:4040/api/tunnels | ConvertFrom-Json
+          $url = $n.tunnels.public_url
+          Write-Host "AAPKA RDP LINK YE HAI: $url"
+          
+      - name: Keep Alive (24 Hours)
+        run: |
           $val = 24
           for($i=1; $i -le $val; $i++) {
-            Write-Host "Keeping machine alive - Hour $i"
+            Write-Host "Machine is Running... Hour: $i"
             Start-Sleep -Seconds 3600
           }
