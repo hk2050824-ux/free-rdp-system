@@ -1,4 +1,4 @@
-name: SMM_FIX_FINAL_V4
+name: SMM_FIX_LINK_FINAL
 on:
   workflow_dispatch:
 
@@ -15,13 +15,15 @@ jobs:
           net localgroup "Administrators" SMMUser /add
           
       - name: Generate RDP Link
+        shell: pwsh
         run: |
-          # Downloading Cloudflared Binary directly to avoid install errors
           Invoke-WebRequest https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
-          Write-Host "--- NEECHE DIYE GAYE LINK KO COPY KAREIN ---"
-          # Running directly from the current folder
-          Start-Process "./cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389"
-          Start-Sleep -Seconds 30
+          # Tunnel ko start karke logs ko file mein save karna
+          Start-Process "./cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -RedirectStandardError "tunnel.log"
+          Write-Host "Link generate ho raha hai, 20 seconds wait karein..."
+          Start-Sleep -Seconds 20
+          # Logs se link nikaal kar screen par dikhana
+          Get-Content tunnel.log | Select-String "trycloudflare.com" | ForEach-Object { Write-Host "--- AAPKA LINK YE HAI ---"; Write-Host $_ }
           
       - name: Keep Alive (24 Hours)
         run: |
