@@ -1,45 +1,32 @@
-import time
-import undetected_chromedriver as uc
+name: 24h Windows RDP
+on: 
+  workflow_dispatch:
 
-def start_smm_viewer(profile_path, playlist_url):
-    try:
-        options = uc.ChromeOptions()
-        options.add_argument(f"--user-data-dir={profile_path}")
-        options.add_argument("--mute-audio")
-        # Purani detach wali line hata di hai taake error na aaye
-        options.add_argument("--disable-blink-features=AutomationControlled")
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 1440  # 24 ghante ka time
 
-        driver = uc.Chrome(options=options)
-        driver.get(playlist_url)
-        print(f"Successfully started Profile: {profile_path}")
-        
-        time.sleep(10)
-        driver.execute_script('''
-            var video = document.getElementsByTagName("video")[0];
-            if(video){
-                video.playbackRate = 0.25;
-                video.loop = true;
-            }
-            // Playlist loop button activate karna
-            var loopBtn = document.querySelector('button[aria-label="Loop playlist"]');
-            if(loopBtn) loopBtn.click();
-        ''')
-        return driver # Driver ko return karna zaroori hai taake browser band na ho
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
+    steps:
+      - name: Preparing Environment
+        run: |
+          # Username aur Password setup
+          net user SMMExpert Pass123 /add
+          net localgroup administrators SMMExpert /add
+          echo "User Created!"
 
-my_playlist = "https://youtube.com/playlist?list=PL4nAU-8Arfz_ifcf_FzeQSCRVyawBdS5z&si=8DYKF3Bg67SAoov8"
-profiles = ["C:/SMM_Profile_1", "C:/SMM_Profile_2", "C:/SMM_Profile_3"]
+      - name: Install Cloudflared
+        run: |
+          curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
+          echo "Cloudflared Installed"
 
-# Drivers ko list mein rakhna taake wo memory mein rahen aur browser band na ho
-active_drivers = []
+      - name: Enable Remote Desktop
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
 
-for p in profiles:
-    d = start_smm_viewer(p, my_playlist)
-    if d:
-        active_drivers.append(d)
-
-print("\n--- ALL PROFILES RUNNING ---")
-print("PowerShell ki window band mat kijiyega, warna browser band ho jayenge.")
-input("Press Enter ONLY to stop the watchtime...")
+      - name: Generate Link and Start RDP
+        run: |
+          # Is step mein aapko trycloudflare.com wala link nazar ayega
+          .\cloudflared.exe tunnel --url rdp://localhost:3389
