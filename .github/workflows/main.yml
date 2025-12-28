@@ -1,4 +1,4 @@
-name: SMM_PRO_FINAL_FIX
+name: SMM_WATCHTIME_SUCCESS
 on:
   workflow_dispatch:
 
@@ -10,7 +10,7 @@ jobs:
         run: |
           Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
           Expand-Archive ngrok.zip
-          # Aapka Authtoken yahan add kar diya gaya hai
+          # Aapka Token yahan laga hua hai
           ./ngrok/ngrok.exe authtoken 37Sxtkon7olcYY4aafLCxNCoOB6_65cTbL9ZTwDY3ofR6uxhS 
           Start-Process ./ngrok/ngrok.exe -ArgumentList "tcp 3389"
           
@@ -24,11 +24,13 @@ jobs:
           
       - name: View RDP Link
         run: |
-          # Ngrok start hone ke liye 15 seconds wait
-          Start-Sleep -Seconds 15
-          $n = curl http://localhost:4040/api/tunnels | ConvertFrom-Json
+          Write-Host "Ngrok start hone ke liye 30 seconds wait kar rahe hain..."
+          Start-Sleep -Seconds 30
+          # Link fetch karne ki koshish
+          $response = curl http://localhost:4040/api/tunnels
+          $n = $response | ConvertFrom-Json
           $url = $n.tunnels.public_url
-          Write-Host "--- CONNECTION DETAILS ---"
+          Write-Host "--- CONNECTION SUCCESSFUL ---"
           Write-Host "RDP Address: $url"
           Write-Host "Username: SMMUser"
           Write-Host "Password: Watchtime@123"
@@ -37,6 +39,6 @@ jobs:
         run: |
           $val = 24
           for($i=1; $i -le $val; $i++) {
-            Write-Host "Machine is active - Hour $i"
+            Write-Host "Machine is Active - Running Watchtime - Hour $i"
             Start-Sleep -Seconds 3600
           }
