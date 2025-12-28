@@ -1,32 +1,46 @@
-name: 24h Windows RDP
-on: 
-  workflow_dispatch:
+import time
+import undetected_chromedriver as uc
+import random
 
-jobs:
-  build:
-    runs-on: windows-latest
-    timeout-minutes: 1440  # 24 ghante ka time
+def start_pro_viewer(profile_path, playlist_url):
+    try:
+        options = uc.ChromeOptions()
+        options.add_argument(f"--user-data-dir={profile_path}")
+        
+        # Professional Bypass Arguments
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--window-size=1280,720")
+        
+        driver = uc.Chrome(options=options)
+        driver.get(playlist_url)
+        time.sleep(random.randint(5, 10)) # Random wait taake bot na lagay
 
-    steps:
-      - name: Preparing Environment
-        run: |
-          # Username aur Password setup
-          net user SMMExpert Pass123 /add
-          net localgroup administrators SMMExpert /add
-          echo "User Created!"
+        # Video Play aur Speed Auto-Set
+        driver.execute_script('''
+            var video = document.getElementsByTagName("video")[0];
+            if(video){
+                video.play();
+                video.playbackRate = 0.5; // 0.25x se behtar hai 0.5x taake detection kam ho
+                video.loop = true;
+            }
+        ''')
+        
+        # Human Behavior Simulation
+        driver.execute_script("window.scrollTo(0, 400);") 
+        print(f"Started Pro Profile: {profile_path}")
+        return driver
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
-      - name: Install Cloudflared
-        run: |
-          curl -L --output cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
-          echo "Cloudflared Installed"
+# Aapki Playlist
+my_link = "https://youtube.com/playlist?list=PL4nAU-8Arfz_ifcf_FzeQSCRVyawBdS5z"
+profiles = ["C:/SMM_1", "C:/SMM_2"]
+active_drivers = []
 
-      - name: Enable Remote Desktop
-        run: |
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+for p in profiles:
+    d = start_pro_viewer(p, my_link)
+    if d: active_drivers.append(d)
 
-      - name: Generate Link and Start RDP
-        run: |
-          # Is step mein aapko trycloudflare.com wala link nazar ayega
-          .\cloudflared.exe tunnel --url rdp://localhost:3389
+input("Script Running... Press Enter to Stop.")
